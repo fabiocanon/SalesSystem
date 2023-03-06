@@ -2,10 +2,8 @@
 {
     public class Uploadimage
     {
-        public async Task<byte[]> ByteAvatarImageAsync(IFormFile AvatarImage, IWebHostEnvironment enviroment)
-        {
-            string image = "images/images/default.png";
-
+        public async Task<byte[]> ByteAvatarImageAsync(IFormFile AvatarImage, IWebHostEnvironment enviroment, string image)
+        {            
             if (AvatarImage != null)
             {
                 using (var memoryStream = new MemoryStream())
