@@ -31,6 +31,9 @@ input[type="file"] {
     position: absolute;
     z-index: -1;
 }
+.imageUser {
+    max-width: 80%;
+}
 /* Sticky footer styles
 -------------------------------------------------- */
 html {
