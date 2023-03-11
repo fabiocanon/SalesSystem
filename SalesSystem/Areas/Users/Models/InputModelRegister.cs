@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
 namespace SalesSystem.Areas.Users.Models
@@ -28,7 +29,16 @@ namespace SalesSystem.Areas.Users.Models
         [StringLength(100, ErrorMessage = "El número de caracteres de {0} debe ser al menos {2}.", MinimumLength = 6)]
         public string Password { get; set; }
 
-        //[Required]
-        public string Role{ get; set; }
+        [Required(ErrorMessage = "Seleccione un role.")]
+        public string Role { get; set; }
+
+
+        public string? ID { get; set; }
+        public int Id { get; set; }
+
+        public byte[]? Image{ get; set; }
+
+        public IdentityUser? IdentityUser { get; set; }
+
     }
 }

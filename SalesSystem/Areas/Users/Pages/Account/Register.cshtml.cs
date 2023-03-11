@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using SalesSystem.Areas.Users.Models;
 using SalesSystem.Data;
 using SalesSystem.Library;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 
 namespace SalesSystem.Areas.Users.Pages.Account
@@ -36,7 +37,6 @@ namespace SalesSystem.Areas.Users.Pages.Account
             _usersRole = new LUsersRoles();
             _uploadimage = new Uploadimage();
         }
-
         public void OnGet()
         {
             if (_dataInput != null)
@@ -52,46 +52,40 @@ namespace SalesSystem.Areas.Users.Pages.Account
                     rolesLista = _usersRole.getRoles(_roleManager)
                 };
             }
-        }
 
+        }
         [BindProperty]
         public InputModel Input { get; set; }
-
         public class InputModel : InputModelRegister
         {
-            public IFormFile AvatarImage { get; set; }
-            [TempData]
-            public string ErrorMessage { get; set; }
-
-            public List<SelectListItem> rolesLista { get; set; }
+            public IFormFile? AvatarImage { get; set; }
+            [TempData]          
+            public string? ErrorMessage { get; set; }
+            public List<SelectListItem>? rolesLista { get; set; }
         }
-
         public async Task<IActionResult> OnPost()
         {
             if (await SaveAsync())
             {
-                return Redirect("/Users/Users/?area=Users");
+                return Redirect("/Users/Users?area=Users");
             }
             else
             {
                 return Redirect("/Users/Register");
             }
         }
-
         private async Task<bool> SaveAsync()
         {
             _dataInput = Input;
-            var valor = false;
+            var valor = false;         
 
-            if (!Input.Role.Equals("Seleccione un role"))
+            if (ModelState.IsValid)
             {
                 var userList = _userManager.Users.Where(u => u.Email.Equals(Input.Email)).ToList();
-
                 if (userList.Count.Equals(0))
                 {
                     var strategy = _context.Database.CreateExecutionStrategy();
-                    await strategy.ExecuteAsync(async () =>
-                    {
+                    await strategy.ExecuteAsync(async () => {
                         using (var transaction = _context.Database.BeginTransaction())
                         {
                             try
@@ -102,15 +96,13 @@ namespace SalesSystem.Areas.Users.Pages.Account
                                     Email = Input.Email,
                                     PhoneNumber = Input.PhoneNumber
                                 };
-
                                 var result = await _userManager.CreateAsync(user, Input.Password);
-
                                 if (result.Succeeded)
                                 {
                                     await _userManager.AddToRoleAsync(user, Input.Role);
                                     var dataUser = _userManager.Users.Where(u => u.Email.Equals(Input.Email)).ToList().Last();
-                                    var imageByte = await _uploadimage.ByteAvatarImageAsync(Input.AvatarImage, _environment, "images/images/default.png");
-
+                                    var imageByte = await _uploadimage.ByteAvatarImageAsync(
+                                        Input.AvatarImage, _environment, "images/images/default.png");
                                     var t_user = new TUsers
                                     {
                                         Name = Input.Name,
@@ -120,14 +112,12 @@ namespace SalesSystem.Areas.Users.Pages.Account
                                         IdUser = dataUser.Id,
                                         Image = imageByte,
                                     };
-
                                     await _context.AddAsync(t_user);
                                     _context.SaveChanges();
 
                                     transaction.Commit();
                                     _dataInput = null;
                                     valor = true;
-                                
                                 }
                                 else
                                 {
@@ -138,11 +128,10 @@ namespace SalesSystem.Areas.Users.Pages.Account
                                     valor = false;
                                     transaction.Rollback();
                                 }
-
                             }
                             catch (Exception ex)
                             {
-                                _dataInput.ErrorMessage = ex.Message + " " + ex.InnerException;
+                                _dataInput.ErrorMessage = ex.Message;
                                 transaction.Rollback();
                                 valor = false;
                             }
@@ -151,14 +140,19 @@ namespace SalesSystem.Areas.Users.Pages.Account
                 }
                 else
                 {
-                    _dataInput.ErrorMessage = $"El {Input.Email} ya esta registrado.";
+                    _dataInput.ErrorMessage = $"El {Input.Email} ya esta registrado";
                     valor = false;
                 }
-
             }
             else
             {
-                _dataInput.ErrorMessage = "Seleccione un rol";
+                foreach (var modelState in ModelState.Values)
+                {
+                    foreach (var error in modelState.Errors)
+                    {
+                        _dataInput.ErrorMessage += error.ErrorMessage;
+                    }
+                }
                 valor = false;
             }
 
